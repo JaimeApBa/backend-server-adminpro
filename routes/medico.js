@@ -43,16 +43,44 @@ app.get('/', (req, res) => {
 });
 
 // ====================================================
-// Actualizar medico
+// Obtener un medicos
 // ====================================================
 
-app.put('/:id', mdAuthetication.verificaToken, (req, res) => {
+app.get('/:id', (req, res) => {
 
     var id = req.params.id;
+    Medico.findById(id)
+        .populate('usuario', 'nombre email img')
+        .populate('hospital')
+        .exec((err, medico) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    message: 'Error al buscar medico',
+                    errors: err
+                });
+            }
+            if (!medico) {
+                return res.status(400).json({
+                    ok: false,
+                    message: 'El medico no existe',
+                    errors: err
+                });
+            }
+            return res.status(200).json({
+                ok: true,
+                medico
+            });
+        });
+});
+
+// ====================================================
+// Actualizar medico
+// ====================================================
+app.put('/:id', mdAuthetication.verificaToken, (req, res) => {
+    var id = req.params.id;
     var body = req.body;
-
     Medico.findById(id, (err, medico) => {
-
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -60,7 +88,6 @@ app.put('/:id', mdAuthetication.verificaToken, (req, res) => {
                 errors: err
             });
         }
-
         if (!medico) {
             return res.status(400).json({
                 ok: false,
@@ -68,13 +95,10 @@ app.put('/:id', mdAuthetication.verificaToken, (req, res) => {
                 errors: err
             });
         }
-
         medico.nombre = body.nombre;
         medico.usuario = req.usuario._id;
         medico.hospital = body.hospital;
-
         medico.save((err, medicoGuardado) => {
-
             if (err) {
                 return res.status(500).json({
                     ok: false,
@@ -82,33 +106,24 @@ app.put('/:id', mdAuthetication.verificaToken, (req, res) => {
                     errors: err
                 });
             }
-
             return res.status(200).json({
                 ok: true,
                 medico: medicoGuardado
             });
         });
-
     });
-
 });
-
 // ====================================================
 // Crear nuevo medico
 // ====================================================
-
 app.post('/', mdAuthetication.verificaToken, (req, res) => {
-
     var body = req.body;
-
     var medico = new Medico({
         nombre: body.nombre,
         usuario: req.usuario._id,
         hospital: body.hospital
     });
-
     medico.save((err, medicoGuardado) => {
-
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -116,26 +131,18 @@ app.post('/', mdAuthetication.verificaToken, (req, res) => {
                 errors: err
             });
         }
-
         return res.status(200).json({
             ok: true,
             medico: medicoGuardado
         });
-
     });
-
 });
-
 // ====================================================
 // Borrar medico
 // ====================================================
-
 app.delete('/:id', mdAuthetication.verificaToken, (req, res) => {
-
     var id = req.params.id;
-
     Medico.findByIdAndRemove(id, (err, medicoBorrado) => {
-
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -143,7 +150,6 @@ app.delete('/:id', mdAuthetication.verificaToken, (req, res) => {
                 errors: err
             });
         }
-
         if (!medicoBorrado) {
             return res.status(400).json({
                 ok: false,
@@ -151,14 +157,10 @@ app.delete('/:id', mdAuthetication.verificaToken, (req, res) => {
                 errors: { message: 'No existe ese medico' }
             });
         }
-
         return res.status(200).json({
             ok: true,
             medico: medicoBorrado
         });
-
     });
-
 });
-
 module.exports = app;
